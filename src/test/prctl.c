@@ -79,6 +79,8 @@ int main(void) {
   test_assert(-1 == prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7000000, page_size, "foo") &&
               (errno == EINVAL || errno == EBADF || errno == ENOMEM));
 
+  return 1;
+
   atomic_puts("EXIT-SUCCESS");
   return 0;
 }
