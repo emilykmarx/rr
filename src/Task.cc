@@ -1753,12 +1753,15 @@ union PackedDebugControl {
 };
 
 static bool set_x86_debug_regs(Task *t, const Task::HardwareWatchpoints& regs) {
+  LOG(error) << "set_x86_debug_regs " << "; regs.size() " << regs.size();
+
   // Reset the debug status since we're about to change the set
   // of programmed watchpoints.
   t->set_x86_debug_reg(6, 0);
 
   if (regs.size() > NUM_X86_WATCHPOINTS) {
     t->set_x86_debug_reg(7, 0);
+    LOG(error) << "too many wp";
     return false;
   }
 
@@ -1782,12 +1785,18 @@ static bool set_x86_debug_regs(Task *t, const Task::HardwareWatchpoints& regs) {
   for (auto reg : regs) {
     if (!t->set_x86_debug_reg(index, reg.addr.as_int())) {
       t->set_x86_debug_reg(7, 0);
+      LOG(error) << "first set_x86_debug_reg call returned false";
       return false;
     }
     dr7.ctl.enable(index, num_bytes_to_dr_len(reg.num_bytes), reg.type);
     ++index;
   }
-  return t->set_x86_debug_reg(7, dr7.packed);
+  bool ret = t->set_x86_debug_reg(7, dr7.packed);
+  if (!ret) {
+    LOG(error) << "second set_x86_debug_reg call returned false";
+  }
+  LOG(error) << "exit set_x86_debug_regs " << "; regs.size() " << regs.size();
+  return ret;
 }
 
 template <typename Arch>
